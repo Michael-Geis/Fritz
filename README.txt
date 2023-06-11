@@ -1,0 +1,1 @@
+Fritz is a baby hippo who lives in Cincinatti.
