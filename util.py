@@ -3,6 +3,8 @@ import glob
 import pandas as pd
 import regex
 import arxiv
+import json
+import util
 
 def category_map():
     """Maps arXiv subject categories to their full english names.
@@ -175,6 +177,26 @@ def category_map():
     'stat.OT': 'Other Statistics',
     'stat.TH': 'Statistics Theory'}
 
+
+def msc_tags():
+    with open('./data/msc.json','r') as file:
+        text = file.read()
+        return json.loads(text)
+
+def msc_to_eng(msc_list):
+    out = []
+    if msc_list is None:
+        return None
+    for tag in msc_list:
+        if tag not in util.msc_tags().keys():
+            continue
+        else:
+            out.append(util.msc_tags()[tag])
+        return out
+
+
+
+
 ## 1. Latin-ize latex accents enclosed in brackets
 def remove_latex_accents(string):
     accent = r'\\[\'\"\^\`H\~ckl=bdruvtoi]\{([a-z])\}'
@@ -224,6 +246,19 @@ def find_hyph(text):
     else:
         return list(set(keywords))
 
+def find_msc(cat_list):
+    pattern = r'\b\d{2}[0-9a-zA-Z]{3}\b'
+    out = []
+    for cat in cat_list:
+        tags = regex.findall(pattern,cat)
+        for tag in tags:
+            out.append(tag)
+    if out == []:
+        return None
+    else:
+        return out
+
+
 def format_query(author='',title='',cat='',abstract=''):
     """Returns a formatted arxiv query string to handle simple queries of at most one instance each of these fields. To leave a field unspecified,
     leave the corresponding argument blank.
@@ -264,12 +299,13 @@ def query_to_df(query,max_results):
         The 'links' column is dropped and the authors column is a list of each author's name as a string.
         The categories column is also a list of all tags appearing.
     """
+    client = arxiv.Client(page_size=100,num_retries=3)
     search = arxiv.Search(
             query = query,
             max_results=max_results,
             sort_by=arxiv.SortCriterion.LastUpdatedDate
             )
-    results = search.results()
+    results = client.results(search)
 
     drop_cols = ['authors','links','_raw']
     df = pd.DataFrame()
@@ -277,6 +313,7 @@ def query_to_df(query,max_results):
     for result in results:
         row_dict = {k : v for (k,v) in vars(result).items() if k not in drop_cols}
         row_dict['authors'] = [author.name for author in result.authors]
+        row_dict['links'] = [link.href for link in result.links]
         row = pd.Series(row_dict)
         df = pd.concat([df , row.to_frame().transpose()], axis = 0)
 
