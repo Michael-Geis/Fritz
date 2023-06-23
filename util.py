@@ -253,10 +253,7 @@ def find_msc(cat_list):
         tags = regex.findall(pattern,cat)
         for tag in tags:
             out.append(tag)
-    if out == []:
-        return None
-    else:
-        return out
+    return out
 
 
 def format_query(author='',title='',cat='',abstract=''):
