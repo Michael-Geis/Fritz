@@ -25,4 +25,4 @@ def embed_metadata(path_to_raw_metadata_df,path_to_save_embeddings):
     
     pq.write_table(table_emb,path_to_save_embeddings)
     
-def embed_msc_tags(path_to_msc_dict):
+# def embed_msc_tags(path_to_msc_dict):
