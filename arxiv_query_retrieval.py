@@ -1,5 +1,59 @@
 import arxiv
 import pandas as pd
+import data_cleaning as clean
+from sklearn.preprocessing import MultiLabelBinarizer
+
+class ArXivData():
+    """A light class for storing the metadata of a collection of arXiv papers.
+    """   
+
+    def __init__(self):
+        """
+        data: dataframe holding the metadata. Each row represents a paper and each column is
+        a separate piece of metadata.
+        
+        query: A tuple of the form (query_string,max_results) where query_string is the formatted 
+        string that produced the raw data and max_results is the value of that parameter passed to the
+        arXiv API.
+
+        raw: The original, raw dataset as returned by the arXiv API, if current data is clean.
+
+        cats: A DataFrame containing one-hot-encoded categories of the self.data DataFrame.
+        """
+
+        self.data = None
+        self.query = None
+        self.raw = None
+        self.categories = None
+
+    def get_from_query(self,query_string,max_results):
+        self.data = query_to_df(query=query_string,max_results=max_results)        
+        self.query = (query_string,max_results)
+        self.raw = self.data
+        self.categories = self.get_OHE_cats()
+        
+        
+    def clean(self,dataset):
+        """Constructs this dataset by cleaning another one.
+
+        Args:
+            dataset: An ArXivData object containing data to be cleaned.
+        """
+        self.data = clean.clean(dataset)
+        self.query = dataset.query
+        self.raw = dataset.raw
+        self.categories = dataset.categories
+
+    def get_OHE_cats(self):
+        mlb = MultiLabelBinarizer()
+        OHE_category_array = mlb.fit_transform(self.data.categories)
+        return pd.DataFrame(
+            OHE_category_array, columns = mlb.classes_).rename(
+            mapper=clean.category_map())
+
+
+
+
 
 def format_query(author='',title='',cat='',abstract=''):
     """Returns a formatted arxiv query string to handle simple queries of at most one instance each of these fields. To leave a field unspecified,
