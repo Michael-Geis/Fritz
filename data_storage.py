@@ -23,14 +23,15 @@ class ArXivData():
 
         self.data = None
         self.query = None
-        self.raw = None
         self.categories = None
 
-    def get_from_query(self,query_string,max_results):
-        self.data = query_to_df(query=query_string,max_results=max_results)        
+    def load_from_file():
+        pass    
+
+    def load_from_query(self,query_string,max_results,offset):
+        self.data = query_to_df(query=query_string,max_results=max_results,offset=offset)        
         self.query = (query_string,max_results)
-        self.raw = self.data
-        self.categories = self.get_OHE_cats()
+        #self.categories = self.get_OHE_cats()
         
         
     def clean(self,dataset):
@@ -78,7 +79,7 @@ def format_query(author='',title='',cat='',abstract=''):
 
 
 
-def query_to_df(query,max_results):
+def query_to_df(query,max_results,offset):
     """Returns the results of an arxiv API query in a pandas dataframe.
 
     Args:
@@ -86,6 +87,8 @@ def query_to_df(query,max_results):
         https://info.arxiv.org/help/api/user-manual.html#51-details-of-query-construction
         
         max_results: positive integer specifying the maximum number of results returned.
+
+        chunksize:
 
     Returns:
         pandas dataframe with one column for indivial piece of metadata of a returned result.
@@ -95,22 +98,31 @@ def query_to_df(query,max_results):
         The 'links' column is dropped and the authors column is a list of each author's name as a string.
         The categories column is also a list of all tags appearing.
     """
-    client = arxiv.Client(page_size=100,num_retries=3)
+    client = arxiv.Client(page_size=2000,num_retries=3)
     search = arxiv.Search(
             query = query,
             max_results=max_results,
             sort_by=arxiv.SortCriterion.LastUpdatedDate
             )
-    results = client.results(search)
+    
+    columns = ['title','summary','categories','id']
+    index = range(offset,max_results)
 
-    drop_cols = ['authors','links','_raw']
-    df = pd.DataFrame()
 
-    for result in results:
-        row_dict = {k : v for (k,v) in vars(result).items() if k not in drop_cols}
-        row_dict['authors'] = [author.name for author in result.authors]
-        row_dict['links'] = [link.href for link in result.links]
-        row = pd.Series(row_dict)
-        df = pd.concat([df , row.to_frame().transpose()], axis = 0)
+    results = client.results(search,offset=offset)
 
-    return df.reset_index(drop=True,inplace=False)
+    metadata_generator = ((result.title,result.summary,    
+                        result.categories,
+                        result.entry_id.split('/')[-1]) for result in results)
+    
+    metadata_dataframe = pd.DataFrame(metadata_generator, columns=columns, index=index)
+
+
+    return metadata_dataframe
+
+
+
+
+
+
+
