@@ -1,6 +1,6 @@
 data/
 __pycache__
 README.txt
-.venv
+env
 .vscode
 .conda
