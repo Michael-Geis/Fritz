@@ -2,6 +2,7 @@ import regex
 import pandas as pd
 import json
 import sentence_transformers.util
+import numpy as np
 import os
 
 
@@ -196,35 +197,25 @@ def category_map():
     }
 
 
-def split_categories_by_row(raw_metadata_row):
-    """Takes in row of a dataframe returned by an arxiv query search, returns a tuple with the list
-    of arXiv subject tags in the first slot, msc_tags in the second slot.
+def extract_arxiv_subjects(raw_metadata):
+    def get_arxiv_subjects_from_cats(categories):
+        arxiv_subject_labels = category_map()
+        return [tag for tag in categories if tag in arxiv_subject_labels.keys()]
 
-    Args:
-        raw_metadata_row: row of a dataframe returned by an arXiv query request
-
-    Returns:
-        (x , y): x and y are lists; x is a list of arxiv subjects, y is a list of msc_tags.
-    """
-    categories = raw_metadata_row.categories
-    expanded_categories = pd.Series(categories)
-    arxiv_subject_labels = category_map()
-
-    if expanded_categories.isin(arxiv_subject_labels.keys()).all():
-        return (raw_metadata_row.categories, None)
-    else:
-        msc_tags = find_msc(raw_metadata_row.categories[-1])
-        return (raw_metadata_row.categories[:-2], msc_tags)
+    return raw_metadata.categories.apply(get_arxiv_subjects_from_cats)
 
 
-def extract_tags(raw_metadata, arxiv_tag):
-    split_categories = raw_metadata.apply(split_categories_by_row, axis=0)
+def extract_msc_tags(raw_metadata):
+    ## Check the last entry for 5 digit msc tags only.
 
-    flag = 1
-    if arxiv_tag:
-        flag = 0
+    msc_tags = raw_metadata.categories.apply(lambda x: find_msc(x[-1]))
 
-    return split_categories.apply(lambda x: x[flag])
+    msc_tags = msc_tags.apply(lambda x: np.nan if len(x) == 0 else x)
+
+    return msc_tags
+
+
+#### LATEX CLEANING UTILITIES
 
 
 ## 1. Latin-ize latex accents enclosed in brackets
@@ -285,9 +276,9 @@ def find_hyph(text):
 
 
 def find_msc(msc_string):
-    pattern = r"\b\d{2}[0-9a-zA-Z]{3}\b"
-    tags = regex.findall(pattern, msc_string)
-    return tags
+    five_digit_pattern = r"\b\d{2}[0-9a-zA-Z]{3}\b"
+    five_digit_tags = regex.findall(five_digit_pattern, msc_string)
+    return five_digit_tags
 
 
 def msc_tags():

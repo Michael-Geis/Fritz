@@ -20,13 +20,19 @@ class ArXivData:
         self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
         self.metadata = self._returned_metadata.drop(columns=["arxiv_subjects"])
 
-    def load_from_query(self, query_string, max_results, offset=0):
-        self._returned_metadata = query_to_df(
-            query=query_string, max_results=max_results, offset=offset
-        )
+    def load_from_query(self, query, max_results, offset=0, raw=False):
+        if raw:
+            self._returned_metadata = query_to_df(
+                query=query, max_results=max_results, offset=offset, raw=True
+            )
 
-        self.metadata = self._returned_metadata.drop(columns="arxiv_subjects")
-        self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
+        else:
+            self._returned_metadata = query_to_df(
+                query=query, max_results=max_results, offset=offset
+            )
+
+            self.metadata = self._returned_metadata.drop(columns="arxiv_subjects")
+            self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
 
     def clean(self, dataset):
         """Constructs this dataset by cleaning another one.
@@ -39,15 +45,20 @@ class ArXivData:
         self.raw = dataset.raw
         self.categories = dataset.categories
 
-    def get_OHE_arxiv_subjects(returned_metadata):
+    def get_OHE_arxiv_subjects(self, returned_metadata):
         mlb = MultiLabelBinarizer()
 
         OHE_arxiv_subjects_array = mlb.fit_transform(returned_metadata.arxiv_subjects)
         arxiv_subject_labels = clean.category_map()
 
-        return pd.DataFrame(OHE_arxiv_subjects_array, columns=mlb.classes_).rename(
-            columns=arxiv_subject_labels
-        )
+        OHE_arxiv_subjects = pd.DataFrame(
+            OHE_arxiv_subjects_array, columns=mlb.classes_
+        ).rename(columns=arxiv_subject_labels)
+
+        ## Remove duplicated columns
+        return OHE_arxiv_subjects.loc[
+            :, ~OHE_arxiv_subjects.columns.duplicated()
+        ].copy()
 
 
 def format_query(author="", title="", cat="", abstract=""):
@@ -72,7 +83,7 @@ def format_query(author="", title="", cat="", abstract=""):
     return query
 
 
-def query_to_df(query, max_results, offset):
+def query_to_df(query, max_results, offset, raw=False):
     """Returns the results of an arxiv API query in a pandas dataframe.
 
     Args:
@@ -116,9 +127,10 @@ def query_to_df(query, max_results, offset):
     raw_metadata = pd.DataFrame(metadata_generator, columns=columns, index=index)
 
     returned_metadata = raw_metadata.copy().drop(columns=["categories"])
-    returned_metadata["arxiv_subjects"] = clean.extract_tags(
-        raw_metadata, arxiv_tag=True
-    )
-    returned_metadata["msc_tags"] = clean.extract_tags(raw_metadata, arxiv_tag=False)
+    returned_metadata["arxiv_subjects"] = clean.extract_arxiv_subjects(raw_metadata)
+    returned_metadata["msc_tags"] = clean.extract_msc_tags(raw_metadata)
+
+    if raw:
+        return raw_metadata
 
     return returned_metadata
