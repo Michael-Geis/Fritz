@@ -34,17 +34,6 @@ class ArXivData:
             self.metadata = self._returned_metadata.drop(columns="arxiv_subjects")
             self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
 
-    def clean(self, dataset):
-        """Constructs this dataset by cleaning another one.
-
-        Args:
-            dataset: An ArXivData object containing data to be cleaned.
-        """
-        self.data = clean.clean(dataset)
-        self.query = dataset.query
-        self.raw = dataset.raw
-        self.categories = dataset.categories
-
     def get_OHE_arxiv_subjects(self, returned_metadata):
         mlb = MultiLabelBinarizer()
 
