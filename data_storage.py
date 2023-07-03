@@ -2,38 +2,31 @@ import arxiv
 import pandas as pd
 import data_cleaning as clean
 from sklearn.preprocessing import MultiLabelBinarizer
+import os
 
 
 class ArXivData:
     """A light class for storing the metadata of a collection of arXiv papers."""
 
     def __init__(self):
-        """
-        data: dataframe holding the metadata. Each row represents a paper and each column is
-        a separate piece of metadata.
+        self.metadata = None
+        self.arxiv_subjects = None
+        self._returned_metadata = None
 
-        query: A tuple of the form (query_string,max_results) where query_string is the formatted
-        string that produced the raw data and max_results is the value of that parameter passed to the
-        arXiv API.
+    def load_from_file(self, dataset_file_name, path_to_data_dir):
+        path_to_dataset = os.path.join(path_to_data_dir, dataset_file_name)
+        self._returned_metadata = pd.read_feather(path_to_dataset)
 
-        raw: The original, raw dataset as returned by the arXiv API, if current data is clean.
+        self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
+        self.metadata = self._returned_metadata.drop(columns=["arxiv_subjects"])
 
-        cats: A DataFrame containing one-hot-encoded categories of the self.data DataFrame.
-        """
-
-        self.data = None
-        self.query = None
-        self.categories = None
-
-    def load_from_file():
-        pass
-
-    def load_from_query(self, query_string, max_results, offset):
-        self.data = query_to_df(
+    def load_from_query(self, query_string, max_results, offset=0):
+        self._returned_metadata = query_to_df(
             query=query_string, max_results=max_results, offset=offset
         )
-        self.query = (query_string, max_results)
-        # self.categories = self.get_OHE_cats()
+
+        self.metadata = self._returned_metadata.drop(columns="arxiv_subjects")
+        self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
 
     def clean(self, dataset):
         """Constructs this dataset by cleaning another one.
@@ -46,11 +39,14 @@ class ArXivData:
         self.raw = dataset.raw
         self.categories = dataset.categories
 
-    def get_OHE_cats(self):
+    def get_OHE_arxiv_subjects(returned_metadata):
         mlb = MultiLabelBinarizer()
-        OHE_category_array = mlb.fit_transform(self.data.categories)
-        return pd.DataFrame(OHE_category_array, columns=mlb.classes_).rename(
-            mapper=clean.category_map()
+
+        OHE_arxiv_subjects_array = mlb.fit_transform(returned_metadata.arxiv_subjects)
+        arxiv_subject_labels = clean.category_map()
+
+        return pd.DataFrame(OHE_arxiv_subjects_array, columns=mlb.classes_).rename(
+            columns=arxiv_subject_labels
         )
 
 
@@ -117,6 +113,12 @@ def query_to_df(query, max_results, offset):
         for result in results
     )
 
-    metadata_dataframe = pd.DataFrame(metadata_generator, columns=columns, index=index)
+    raw_metadata = pd.DataFrame(metadata_generator, columns=columns, index=index)
 
-    return metadata_dataframe
+    returned_metadata = raw_metadata.copy().drop(columns=["categories"])
+    returned_metadata["arxiv_subjects"] = clean.extract_tags(
+        raw_metadata, arxiv_tag=True
+    )
+    returned_metadata["msc_tags"] = clean.extract_tags(raw_metadata, arxiv_tag=False)
+
+    return returned_metadata
