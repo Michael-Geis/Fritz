@@ -13,12 +13,12 @@ class ArXivData:
         self.arxiv_subjects = None
         self._returned_metadata = None
 
-    def load_from_file(self, dataset_file_name, path_to_data_dir):
+    def load_from_feather(self, dataset_file_name, path_to_data_dir):
         path_to_dataset = os.path.join(path_to_data_dir, dataset_file_name)
         self._returned_metadata = pd.read_feather(path_to_dataset)
 
-        self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
         self.metadata = self._returned_metadata.drop(columns=["arxiv_subjects"])
+        self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
 
     def load_from_query(self, query, max_results, offset=0, raw=False):
         if raw:
@@ -33,6 +33,15 @@ class ArXivData:
 
             self.metadata = self._returned_metadata.drop(columns="arxiv_subjects")
             self.arxiv_subjects = self.get_OHE_arxiv_subjects(self._returned_metadata)
+
+    def save_as_feather(self, dataset_file_name, path_to_data_dir):
+        if self._returned_metadata is None:
+            raise Exception(
+                "No data stored. Run load_from_query or load_from_feather to retrieve data."
+            )
+
+        path_to_dataset = os.path.join(path_to_data_dir, dataset_file_name)
+        self._returned_metadata.to_feather(path_to_dataset)
 
     def get_OHE_arxiv_subjects(self, returned_metadata):
         mlb = MultiLabelBinarizer()
