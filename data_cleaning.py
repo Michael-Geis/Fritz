@@ -200,7 +200,7 @@ def category_map():
 def extract_arxiv_subjects(raw_metadata):
     def get_arxiv_subjects_from_cats(categories):
         arxiv_subject_labels = category_map()
-        return [tag for tag in categories if tag in arxiv_subject_labels.keys()]
+        return [tag for tag in categories if tag in arxiv_subject_labels]
 
     return raw_metadata.categories.apply(get_arxiv_subjects_from_cats)
 
