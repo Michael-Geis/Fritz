@@ -305,7 +305,7 @@ def cats_to_msc(cat_list):
 
 def msc_encoded_dict():
     encoded_tags = pd.read_parquet("./data/msc_mini_embeddings.parquet").to_numpy()
-    return {k: v for (k, v) in zip(msc_tags().values(), encoded_tags)}
+    return {k: v for (k, v) in zip(msc_tags().keys(), encoded_tags)}
 
 
 def doc_encoded_dict():
