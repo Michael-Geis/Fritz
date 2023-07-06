@@ -4,26 +4,31 @@ import json
 import sentence_transformers.util
 import numpy as np
 import os
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.base import BaseEstimator, TransformerMixin
 
 
-def main(raw_metadata_df, path_to_embeddings):
-    clean_metadata_df = pd.DataFrame(
-        columns=["sentences", "authors", "msc_tags", "msc_cos_sim"]
-    )
+class TextCleaner(BaseEstimator, TransformerMixin):
+    """Return ArXivData class object with its metadata attribute modified so that
+    1. The 'title' and 'abstract' columns have been scrubbed of latex and accented characters
+    2. The msc tag list has been translated to english.
+    """
 
-    clean_title = raw_metadata_df.title.apply(cleanse)
-    clean_abstract = raw_metadata_df.summary.apply(cleanse)
-    clean_metadata_df.sentences = clean_title + " " + clean_abstract
-    clean_metadata_df.authors = raw_metadata_df.authors
-    clean_metadata_df.msc_tags = raw_metadata_df.categories.apply(cats_to_msc)
+    def fit(self, X, y=None):
+        return self
 
-    return clean_metadata_df
+    def transform(self, X, y=None):
+        X.metadata.title = X.metadata.title.apply(cleanse)
+        X.metadata.abstract = X.metadata.abstract.apply(cleanse)
+        X.metadata.msc_tags[X.metadata.msc_tags.notna()] = X.metadata.msc_tags[
+            X.metadata.msc_tags.notna()
+        ].apply(list_mapper, dictionary=msc_tags())
+        X.metadata["doc_strings"] = X.metadata.title + " " + X.metadata.abstract
+
+        return X
 
 
-##
-
-
-def category_map():
+def arxiv_subject_dict():
     """Maps arXiv subject categories to their full english names.
 
     Returns:
@@ -197,10 +202,63 @@ def category_map():
     }
 
 
+def arxiv_subjects():
+    with open("./data/arxiv_subjects.json", "r") as file:
+        dictionary = file.read()
+        return json.loads(dictionary)
+
+
+def msc_tags():
+    with open("./data/msc.json", "r") as file:
+        dictionary = file.read()
+        return json.loads(dictionary)
+
+
+def list_mapper(item_list, dictionary):
+    mapped_item_list = [
+        dictionary[item] for item in item_list if item in dictionary.keys()
+    ]
+    if len(mapped_item_list) == 0:
+        return None
+    else:
+        return mapped_item_list
+
+
+def split_categories(raw_metadata):
+    """Takes in raw metadata returned by an ArXiv query and converts the 'categories' column into separate
+    arxiv subject tags and msc tags.
+
+    Args:
+        raw_metadata: Dataframe returned by the `data_storage.query_to_df` method. Raw ArXiv query results.
+
+    Returns:
+        The input dataframe with the 'categories' column removed and replaced by 'arxiv_subjects' which is a
+        list of the arxiv subject tags in the categories list, and 'msc_tags' which is a list of the msc tags
+        in the categories list.
+    """
+    split_metadata = raw_metadata.copy().drop(columns=["categories"])
+    split_metadata["arxiv_subjects"] = extract_arxiv_subjects(raw_metadata)
+    split_metadata["msc_tags"] = extract_msc_tags(raw_metadata)
+    return split_metadata
+
+
+def OHE_arxiv_subjects(metadata):
+    mlb = MultiLabelBinarizer()
+    OHE_subject_array = mlb.fit_transform(metadata.arxiv_subjects)
+
+    OHE_arxiv_subjects = pd.DataFrame(data=OHE_subject_array, columns=mlb.classes_)
+
+    mapper = arxiv_subjects()
+    OHE_arxiv_subjects = OHE_arxiv_subjects.rename(columns=mapper)
+    OHE_arxiv_subjects = OHE_arxiv_subjects.loc[
+        :, ~OHE_arxiv_subjects.columns.duplicated()
+    ]
+    return OHE_arxiv_subjects
+
+
 def extract_arxiv_subjects(raw_metadata):
     def get_arxiv_subjects_from_cats(categories):
-        arxiv_subject_labels = category_map()
-        return [tag for tag in categories if tag in arxiv_subject_labels]
+        return [tag for tag in categories if tag in arxiv_subjects().keys()]
 
     return raw_metadata.categories.apply(get_arxiv_subjects_from_cats)
 
@@ -281,12 +339,6 @@ def find_msc(msc_string):
     return five_digit_tags
 
 
-def msc_tags():
-    with open("./data/msc.json", "r") as file:
-        text = file.read()
-        return json.loads(text)
-
-
 def cats_to_msc(cat_list):
     out = []
     for tag in find_msc(cat_list):
@@ -305,7 +357,7 @@ def cats_to_msc(cat_list):
 
 def msc_encoded_dict():
     encoded_tags = pd.read_parquet("./data/msc_mini_embeddings.parquet").to_numpy()
-    return {k: v for (k, v) in zip(msc_tags().keys(), encoded_tags)}
+    return {k: v for (k, v) in zip(msc_tags().values(), encoded_tags)}
 
 
 def doc_encoded_dict():
