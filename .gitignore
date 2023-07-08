@@ -5,3 +5,4 @@ env
 .vscode
 .conda
 settings.json
+collection.ipynb
