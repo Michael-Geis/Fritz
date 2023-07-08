@@ -58,7 +58,8 @@ class Embedder(BaseEstimator, TransformerMixin):
                 path_to_embeddings = os.path.join(
                     os.getcwd(), f"{model_name}_embeddings.feather"
                 )
-                embeddings_df.to_feather(path_to_embeddings)
+
+            embeddings_df.to_feather(path_to_embeddings)
 
 
 class ComputeMSCLabels(BaseEstimator, TransformerMixin):
