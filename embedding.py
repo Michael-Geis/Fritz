@@ -57,6 +57,7 @@ class Embedder(BaseEstimator, TransformerMixin):
                     os.getcwd(), f"{model_name}_embeddings.feather"
                 )
                 embeddings_df = pd.DataFrame(X.embeddings)
+                print("ecks dee")
                 embeddings_df.columns = [
                     str(col_name) for col_name in embeddings_df.columns
                 ]
