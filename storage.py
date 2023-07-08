@@ -1,7 +1,7 @@
 import arxiv
 import pandas as pd
 import numpy as np
-import data_cleaning as clean
+import cleaning as clean
 from dataclasses import dataclass, astuple, asdict
 
 

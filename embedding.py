@@ -1,4 +1,4 @@
-import data_cleaning as clean
+import cleaning as clean
 from sentence_transformers import SentenceTransformer, util
 import pandas as pd
 import numpy as np
