@@ -49,20 +49,16 @@ class Embedder(BaseEstimator, TransformerMixin):
             ## Save the embeddings to the specified path, or, if no path is specified, use the default path
             ## default path = ./model_name_embeddings.feather
 
-            if path_to_embeddings:
-                pd.DataFrame(X.embeddings).to_feather(path_to_embeddings)
+            embeddings_df = pd.DataFrame(embeddings)
+            embeddings_df.columns = [
+                str(column_name) for column_name in embeddings_df.columns
+            ]
 
-            else:
-                default_path = os.path.join(
+            if not path_to_embeddings:
+                path_to_embeddings = os.path.join(
                     os.getcwd(), f"{model_name}_embeddings.feather"
                 )
-                embeddings_df = pd.DataFrame(X.embeddings)
-                print("ecks dee")
-                embeddings_df.columns = [
-                    str(col_name) for col_name in embeddings_df.columns
-                ]
-
-                embeddings_df.to_feather(default_path)
+                embeddings_df.to_feather(path_to_embeddings)
 
 
 class ComputeMSCLabels(BaseEstimator, TransformerMixin):
