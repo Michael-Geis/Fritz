@@ -14,7 +14,12 @@ class Embedder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(
-        self, X, y=None, model_name=None, load_from_file=False, path_to_embeddings=None
+        self,
+        X=None,
+        y=None,
+        model_name=None,
+        load_from_file=False,
+        path_to_embeddings=None,
     ):
         """Either generates embeddings from an clean ArXivData instance or loads embeddings from file.
 
