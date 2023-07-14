@@ -105,7 +105,7 @@ def generate_tag_embeddings(model_name, path_to_tag_dict, path_to_save_embedding
         dict_string = file.read()
         tag_dict = json.loads(dict_string)
 
-    tag_name_list = list(tag_dict.values())
+    tag_name_list = list(set(tag_dict.values()))
     embedded_tag_names = model.encode(sentences=tag_name_list, show_progress_bar=True)
     embedded_tag_names_df = pd.DataFrame(embedded_tag_names)
     embedded_tag_names_df.columns = [
