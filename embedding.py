@@ -111,16 +111,9 @@ def generate_tag_embeddings(model_name, path_to_tag_dict, path_to_save_embedding
     embedded_tag_names_df.columns = [
         str(name) for name in embedded_tag_names_df.columns
     ]
+    embedded_tag_names_df.index = tag_name_list
+    embedded_tag_names_df.to_parquet(path_to_save_embeddings, index=True)
 
-    embedded_tag_names_df.to_feather(path_to_save_embeddings)
 
-
-def load_tag_embeddings(path_to_tag_dict, path_to_tag_embeddings):
-    with open(path_to_tag_dict, "r") as file:
-        dict_string = file.read()
-        tag_dict = json.loads(dict_string)
-
-    tag_name_list = list(tag_dict.values())
-    tag_name_embeddings = pd.read_feather(path_to_tag_embeddings)
-    tag_name_embeddings.index = tag_name_list
-    return tag_name_embeddings
+def load_tag_embeddings(path_to_tag_embeddings):
+    return pd.read_parquet(path_to_tag_embeddings)
