@@ -100,7 +100,7 @@ class ComputeMSCLabels(BaseEstimator, TransformerMixin):
 
 
 def generate_tag_embeddings(model_name, path_to_tag_dict, path_to_save_embeddings):
-    model = SentenceTransformer(model_name=model_name)
+    model = SentenceTransformer(model_name)
     with open(path_to_tag_dict, "r") as file:
         dict_string = file.read()
         tag_dict = json.loads(dict_string)
