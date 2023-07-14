@@ -122,4 +122,4 @@ def load_tag_embeddings(path_to_tag_dict, path_to_tag_embeddings):
 
     tag_name_list = list(tag_dict.values())
     tag_name_embeddings = pd.read_feather(path_to_tag_embeddings)
-    return tag_name_embeddings.reindex(index=tag_name_list, axis="index")
+    return tag_name_embeddings.reindex(index=tag_name_list)
