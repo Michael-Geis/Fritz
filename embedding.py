@@ -107,7 +107,12 @@ def generate_tag_embeddings(model_name, path_to_tag_dict, path_to_save_embedding
 
     tag_name_list = list(tag_dict.values())
     embedded_tag_names = model.encode(sentences=tag_name_list, show_progress_bar=True)
-    pd.DataFrame(embedded_tag_names).to_feather(path_to_save_embeddings)
+    embedded_tag_names_df = pd.DataFrame(embedded_tag_names)
+    embedded_tag_names_df.columns = [
+        str(name) for name in embedded_tag_names_df.columns
+    ]
+
+    embedded_tag_names_df.to_feather(path_to_save_embeddings)
 
 
 def load_tag_embeddings(path_to_tag_dict, path_to_tag_embeddings):
