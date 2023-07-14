@@ -97,3 +97,24 @@ class ComputeMSCLabels(BaseEstimator, TransformerMixin):
         )
 
         return results[0]
+
+
+def generate_tag_embeddings(model_name, path_to_tag_dict, path_to_save_embeddings):
+    model = SentenceTransformer(model_name=model_name)
+    with open(path_to_tag_dict, "r") as file:
+        dict_string = file.read()
+        tag_dict = json.loads(dict_string)
+
+    tag_name_list = list(tag_dict.values())
+    embedded_tag_names = model.encode(sentences=tag_name_list, show_progress_bar=True)
+    pd.DataFrame(embedded_tag_names).to_feather(path_to_save_embeddings)
+
+
+def load_tag_embeddings(path_to_tag_dict, path_to_tag_embeddings):
+    with open(path_to_tag_dict, "r") as file:
+        dict_string = file.read()
+        tag_dict = json.loads(dict_string)
+
+    tag_name_list = list(tag_dict.values())
+    tag_name_embeddings = pd.read_feather(path_to_tag_embeddings)
+    return tag_name_embeddings.reindex(index=tag_name_list, axis="index")
