@@ -1,0 +1,13 @@
+
+
+input_id:
+  id: 1602.00730
+
+
+
+
+
+paths:
+  path_to_library: ./data/libraries/APSP_50_allenai-specter
+  path_to_save_recs: ./output/first_recs.feather
+

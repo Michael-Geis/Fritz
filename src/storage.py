@@ -1,8 +1,16 @@
 import arxiv
 import pandas as pd
 import numpy as np
-import cleaning as clean
-from dataclasses import dataclass, astuple, asdict
+import src.cleaning as clean
+from sklearn.base import TransformerMixin, BaseEstimator
+
+
+class Fetch(BaseEstimator, TransformerMixin):
+    def fit(self):
+        return self
+
+    def transform(self, X, y=None):
+        return query_to_df(id_list=X)
 
 
 class ArXivData:
@@ -62,7 +70,7 @@ class ArXivData:
         self.metadata.to_feather(path_to_dataset)
 
 
-def query_to_df(query=None, id_list=None, max_results=None, offset=0):
+def query_to_df(query=None, id_list=None, max_results=10, offset=0):
     """Returns the results of an arxiv API query in a pandas dataframe.
 
     Args:
@@ -84,6 +92,7 @@ def query_to_df(query=None, id_list=None, max_results=None, offset=0):
     client = arxiv.Client(page_size=2000, num_retries=10)
 
     if id_list:
+        max_results = len(id_list)
         search = arxiv.Search(
             id_list=id_list,
             max_results=max_results,
@@ -102,8 +111,7 @@ def query_to_df(query=None, id_list=None, max_results=None, offset=0):
             sort_by=arxiv.SortCriterion.LastUpdatedDate,
         )
 
-    columns = ["title", "summary", "categories", "id"]
-    index = range(offset, max_results)
+    columns = ["title", "abstract", "authors", "categories", "id"]
 
     results = client.results(search, offset=offset)
 
@@ -111,14 +119,14 @@ def query_to_df(query=None, id_list=None, max_results=None, offset=0):
         (
             result.title,
             result.summary,
+            [author.name for author in result.authors],
             result.categories,
             result.entry_id.split("/")[-1],
         )
         for result in results
     )
 
-    returned_metadata = pd.DataFrame(metadata_generator, columns=columns, index=index)
-    returned_metadata = returned_metadata.rename(columns={"summary": "abstract"})
+    returned_metadata = pd.DataFrame(metadata_generator, columns=columns)
     return returned_metadata
 
 

@@ -9,6 +9,18 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 class TextCleaner(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        doc_strings = (
+            X.title.apply(cleanse) + " " + X.abstract.apply(cleanse)
+        ).to_list()
+
+        return doc_strings
+
+
+class FullTextCleaner(BaseEstimator, TransformerMixin):
     """Return ArXivData class object with its metadata attribute modified so that
     1. The 'title' and 'abstract' columns have been scrubbed of latex and accented characters
     2. The msc tag list has been translated to english.
