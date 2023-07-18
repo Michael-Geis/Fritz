@@ -40,6 +40,11 @@ class ArXivData:
         self.metadata = clean.split_categories(self._returned_metadata)
         self.arxiv_subjects = clean.OHE_arxiv_subjects(self.metadata)
 
+    def load_from_id_list(self, id_list):
+        self._returned_metadata = query_to_df(id_list=id_list, max_results=len(id_list))
+        self.metadata = clean.split_categories(self._returned_metadata)
+        self.arxiv_subjects = clean.OHE_arxiv_subjects(self.metadata)
+
     def save_as_feather(self, path_to_dataset):
         """Saves a dataset as a feather file.
 
@@ -57,7 +62,7 @@ class ArXivData:
         self.metadata.to_feather(path_to_dataset)
 
 
-def query_to_df(query, max_results, offset):
+def query_to_df(query=None, id_list=None, max_results=None, offset=0):
     """Returns the results of an arxiv API query in a pandas dataframe.
 
     Args:
@@ -66,7 +71,7 @@ def query_to_df(query, max_results, offset):
 
         max_results: positive integer specifying the maximum number of results returned.
 
-        chunksize:
+        id_list: A list of arxiv ids as strings to retrieve
 
     Returns:
         pandas dataframe with one column for indivial piece of metadata of a returned result.
@@ -77,11 +82,25 @@ def query_to_df(query, max_results, offset):
         The categories column is also a list of all tags appearing.
     """
     client = arxiv.Client(page_size=2000, num_retries=10)
-    search = arxiv.Search(
-        query=query,
-        max_results=max_results,
-        sort_by=arxiv.SortCriterion.LastUpdatedDate,
-    )
+
+    if id_list:
+        search = arxiv.Search(
+            id_list=id_list,
+            max_results=max_results,
+            sort_by=arxiv.SortCriterion.LastUpdatedDate,
+        )
+
+    else:
+        if not query:
+            raise Exception(
+                "You must pass either a query string or a list of arxiv IDs"
+            )
+
+        search = arxiv.Search(
+            query=query,
+            max_results=max_results,
+            sort_by=arxiv.SortCriterion.LastUpdatedDate,
+        )
 
     columns = ["title", "summary", "categories", "id"]
     index = range(offset, max_results)

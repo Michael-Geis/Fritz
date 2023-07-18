@@ -38,6 +38,8 @@ class Embedder(BaseEstimator, TransformerMixin):
             if not path_to_embeddings:
                 raise Exception("You must specify a path to store the embeddings.")
             X.embeddings = pd.read_feather(path_to_embeddings).to_numpy()
+
+            return X
         else:
             ## Generate embeddings from X and save as an attribute of X.
 
@@ -65,6 +67,8 @@ class Embedder(BaseEstimator, TransformerMixin):
                 )
 
             embeddings_df.to_feather(path_to_embeddings)
+
+            return X
 
 
 class ComputeMSCLabels(BaseEstimator, TransformerMixin):
