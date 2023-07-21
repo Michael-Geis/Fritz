@@ -8,7 +8,7 @@ from src.search import Search
 
 def main(id_list, save_recs=False):
     path_to_library = "./data/libraries/APSP_50_allenai-specter"
-    path_to_save_recs = ""
+    path_to_save_recs = "./output/"
 
     ## Create pipeline
 
