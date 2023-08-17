@@ -1,7 +1,7 @@
 import streamlit as st
 import arxiv
 import pandas as pd
-from src.model import get_recs
+from model import get_recs
 
 
 # Function to extract the details of the paper
