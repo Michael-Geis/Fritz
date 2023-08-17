@@ -1,4 +1,8 @@
-data/
+data/allenai-specter_arxiv_subject_tag_embeddings.parquet
+data/allenai-specter_msc_tag_embeddings.parquet
+data/arxiv_subjects.json
+data/input_embeddings.feather
+data/msc.json
 __pycache__
 README.txt
 venv
