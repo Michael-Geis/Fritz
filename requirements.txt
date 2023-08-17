@@ -4,6 +4,5 @@ numpy
 arxiv
 sentence_transformers
 regex
-sklearn
+scikit-learn
 streamlit
-bertopic
