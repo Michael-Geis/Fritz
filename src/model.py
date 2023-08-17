@@ -1,12 +1,12 @@
 import pandas as pd
 from sklearn.pipeline import Pipeline
-from src.storage import Fetch
-from src.cleaning import TextCleaner
-from src.embedding import Embedder
-from src.search import Search
+from storage import Fetch
+from cleaning import TextCleaner
+from embedding import Embedder
+from search import Search
 
 
-def main(id_list, save_recs=False):
+def get_recs(id_list, save_recs=False):
     path_to_library = "./data/libraries/APSP_50_allenai-specter"
     path_to_save_recs = "./output/"
 
@@ -27,7 +27,3 @@ def main(id_list, save_recs=False):
         recommendation_df.to_feather(path_to_save_recs)
 
     return recommendation_df
-
-
-if __name__ == "main":
-    main()

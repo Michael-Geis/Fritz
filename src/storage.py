@@ -1,7 +1,7 @@
 import arxiv
 import pandas as pd
 import numpy as np
-import src.cleaning as clean
+import cleaning as clean
 from sklearn.base import TransformerMixin, BaseEstimator
 
 

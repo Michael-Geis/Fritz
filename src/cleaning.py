@@ -3,7 +3,6 @@ import pandas as pd
 import json
 import sentence_transformers.util
 import numpy as np
-import os
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.base import BaseEstimator, TransformerMixin
 

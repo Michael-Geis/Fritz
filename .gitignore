@@ -1,7 +1,7 @@
 data/
 __pycache__
 README.txt
-env
+venv
 .vscode
 .conda
 settings.json

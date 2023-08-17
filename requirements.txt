@@ -5,4 +5,5 @@ arxiv
 sentence_transformers
 regex
 sklearn
-hydra
+streamlit
+bertopic
